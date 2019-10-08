@@ -1,7 +1,25 @@
-# PingPong-for-Android
-En primera instancia se implementó el paradigma orientado a objetos para generar una clase Ping Pong la cual abstrae la funcionalidad del juego:
+import ketai.sensors.*;
 
-```C++
+class ComplementaryFilter {
+  // The values of a and b would be respect this condition:
+  // a + b = 1
+  private float a, b;
+  float last;
+
+  ComplementaryFilter( float a )
+  {
+    this.a = a;
+    b  = 1 - a;
+    last  =  0; 
+  }
+  
+  public float compute( float curr )
+  {
+    last = a*last + b*curr; // Complementary filter equation
+    return last; // The  value of last is saved inside class
+  }
+};
+
 class PingPong
 {
   private float x, y, speedX, speedY;
@@ -50,51 +68,8 @@ class PingPong
       this.speedY *= -1;  
   }
 };
-```
 
-El concepto clave es la implementación de la funcion map:
 
-```C++
-this.accelY = map(accelerometerY, -10, 10, 25, 800);
-```
-
-la cual traduce la lectura del acelerómetro en posición y a un valor de posición en la pantalla sobre el mismo eje y. El acelerómetro es leído mediante una rutina de servicio de interrupción: 
-
-```C++
-void onAccelerometerEvent(float x, float y, float z)
-{
-  accelerometerY = filter.compute(y);  
-  accelerometerX = x;
-  accelerometerZ = z;
-}
-```
-Como sólo nos es de interés el valor y, aplicamos un filtro complementario (bajo la implementación de la clase ComplementaryFilter) para suavizar la respuesta del sistema.
-
-```C++
-class ComplementaryFilter {
-  // The values of a and b would be respect this condition:
-  // a + b = 1
-  private float a, b;
-  float last;
-
-  ComplementaryFilter( float a )
-  {
-    this.a = a;
-    b  = 1 - a;
-    last  =  0; 
-  }
-  
-  public float compute( float curr )
-  {
-    last = a*last + b*curr; // Complementary filter equation
-    return last; // The  value of last is saved inside class
-  }
-};
-```
-
-A continuación se muestra el código principal, el cual implementa las clases anteriormente descritas, además del uso de la clase Ketai Sensor para habilitar el uso de la interrupción de lectura del acelerómetro.
-
-```C++
 PingPong game;
 KetaiSensor sensor;
 ComplementaryFilter filter;
@@ -123,4 +98,10 @@ void mousePressed()
 {
   game.reset();
 }
-```
+
+void onAccelerometerEvent(float x, float y, float z)
+{
+  accelerometerY = filter.compute(y);  
+  accelerometerX = x;
+  accelerometerZ = z;
+}
